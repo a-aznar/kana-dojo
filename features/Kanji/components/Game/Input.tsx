@@ -111,6 +111,7 @@ const KanjiInputGame = ({
       ];
 
   const [displayAnswerSummary, setDisplayAnswerSummary] = useState(false);
+  const [promptSequence, setPromptSequence] = useState(0);
   const [feedback, setFeedback] = useState<React.ReactElement>(
     <>{'feedback ~'}</>,
   );
@@ -266,6 +267,7 @@ const KanjiInputGame = ({
     setInputValue('');
     setDisplayAnswerSummary(false);
     generateNewCharacter();
+    setPromptSequence(prev => prev + 1);
     setBottomBarState('check');
     speedStopwatch.reset();
     speedStopwatch.start();
@@ -337,7 +339,7 @@ const KanjiInputGame = ({
                   size='sm'
                   className='bg-(--card-color) text-(--secondary-color)'
                   autoPlay
-                  autoPlayTrigger={`${correctChar}-${String(isReverse)}`}
+                  autoPlayTrigger={promptSequence}
                 />
               )}
             </motion.div>

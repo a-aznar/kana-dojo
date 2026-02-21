@@ -210,6 +210,7 @@ const VocabPickGame = ({ selectedWordObjs, isHidden }: VocabPickGameProps) => {
   );
 
   const [displayAnswerSummary, setDisplayAnswerSummary] = useState(false);
+  const [promptSequence, setPromptSequence] = useState(0);
   const [feedback, setFeedback] = useState(<>{'feedback ~'}</>);
   const [wrongSelectedAnswers, setWrongSelectedAnswers] = useState<string[]>(
     [],
@@ -326,6 +327,7 @@ const VocabPickGame = ({ selectedWordObjs, isHidden }: VocabPickGameProps) => {
     );
     adaptiveSelector.markCharacterSeen(newChar);
     setCorrectChar(newChar);
+    setPromptSequence(prev => prev + 1);
 
     // Get the actual word for the new character to check if it contains kanji
     const newWordObj = wordObjMap.get(newChar);
@@ -397,7 +399,7 @@ const VocabPickGame = ({ selectedWordObjs, isHidden }: VocabPickGameProps) => {
                   size='sm'
                   className='bg-(--card-color) text-(--secondary-color)'
                   autoPlay
-                  autoPlayTrigger={`${correctChar}-${quizType}-${String(isReverse)}`}
+                  autoPlayTrigger={promptSequence}
                 />
               )}
             </div>

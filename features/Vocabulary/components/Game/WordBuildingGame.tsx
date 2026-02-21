@@ -216,6 +216,7 @@ const VocabWordBuildingGame = ({
   const [questionData, setQuestionData] = useState(() =>
     generateQuestion(quizType),
   );
+  const [promptSequence, setPromptSequence] = useState(0);
   const [placedTiles, setPlacedTiles] = useState<string[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [isCelebrating, setIsCelebrating] = useState(false);
@@ -248,6 +249,7 @@ const VocabWordBuildingGame = ({
       const typeToUse = nextQuizType ?? quizType;
       const newQuestion = generateQuestion(typeToUse);
       setQuestionData(newQuestion);
+      setPromptSequence(prev => prev + 1);
       setPlacedTiles([]);
       setIsChecking(false);
       setIsCelebrating(false);
@@ -560,7 +562,7 @@ const VocabWordBuildingGame = ({
                       size='sm'
                       className='bg-(--card-color) text-(--secondary-color)'
                       autoPlay
-                      autoPlayTrigger={`${questionData.word}-${questionData.quizType}-${String(isReverse)}`}
+                      autoPlayTrigger={promptSequence}
                     />
                   )}
                 </motion.div>

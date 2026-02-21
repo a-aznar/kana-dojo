@@ -224,6 +224,7 @@ const KanjiPickGame = ({ selectedKanjiObjs, isHidden }: KanjiPickGameProps) => {
   );
 
   const [displayAnswerSummary, setDisplayAnswerSummary] = useState(false);
+  const [promptSequence, setPromptSequence] = useState(0);
   const [feedback, setFeedback] = useState(<>{'feedback ~'}</>);
   const [wrongSelectedAnswers, setWrongSelectedAnswers] = useState<string[]>(
     [],
@@ -368,6 +369,7 @@ const KanjiPickGame = ({ selectedKanjiObjs, isHidden }: KanjiPickGameProps) => {
     );
     adaptiveSelector.markCharacterSeen(newChar);
     setCorrectChar(newChar);
+    setPromptSequence(prev => prev + 1);
   };
 
   const gameMode = 'pick';
@@ -410,7 +412,7 @@ const KanjiPickGame = ({ selectedKanjiObjs, isHidden }: KanjiPickGameProps) => {
                 size='sm'
                 className='bg-(--card-color) text-(--secondary-color)'
                 autoPlay
-                autoPlayTrigger={correctChar}
+                autoPlayTrigger={promptSequence}
               />
             )}
           </div>

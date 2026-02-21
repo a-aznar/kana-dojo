@@ -238,64 +238,6 @@ const Behavior = () => {
         </button>
       </div>
 
-      <h4 className='text-lg'>Auto-play pronunciation for new prompts:</h4>
-      <div className='flex flex-row gap-4 p-1'>
-        <button
-          className={clsx(
-            buttonBorderStyles,
-            'text-center text-lg',
-            'w-1/2 p-4 md:w-1/4',
-            'flex flex-row items-end justify-center gap-1.5',
-            'text-(--secondary-color)',
-            'flex-1 overflow-hidden',
-          )}
-          style={{
-            outline: pronunciationAutoPlay
-              ? '3px solid var(--secondary-color)'
-              : 'none',
-          }}
-          onClick={() => {
-            playClick();
-            setPronunciationAutoPlay(true);
-          }}
-        >
-          <span>
-            <span className='text-(--main-color)'>
-              {pronunciationAutoPlay && '\u2B24 '}
-            </span>
-            on
-          </span>
-          <Volume2 size={20} className='mb-0.5' />
-        </button>
-        <button
-          className={clsx(
-            buttonBorderStyles,
-            'text-center text-lg',
-            'w-1/2 p-4 md:w-1/4',
-            'flex flex-row items-end justify-center gap-1.5',
-            'text-(--secondary-color)',
-            'flex-1 overflow-hidden',
-          )}
-          style={{
-            outline: !pronunciationAutoPlay
-              ? '3px solid var(--secondary-color)'
-              : 'none',
-          }}
-          onClick={() => {
-            playClick();
-            setPronunciationAutoPlay(false);
-          }}
-        >
-          <span>
-            <span className='text-(--main-color)'>
-              {!pronunciationAutoPlay && '\u2B24 '}
-            </span>
-            off
-          </span>
-          <VolumeX size={20} className='mb-0.5' />
-        </button>
-      </div>
-
       <h4 className='text-lg'>Enable pronunciation audio:</h4>
       <div className='flex flex-row gap-4 p-1'>
         <button
@@ -347,6 +289,64 @@ const Behavior = () => {
           <span>
             <span className='text-(--main-color)'>
               {!pronunciationEnabled && '\u2B24 '}
+            </span>
+            off
+          </span>
+          <VolumeX size={20} className='mb-0.5' />
+        </button>
+      </div>
+
+      <h4 className='text-lg'>Auto-play pronunciation for new prompts:</h4>
+      <div className='flex flex-row gap-4 p-1'>
+        <button
+          className={clsx(
+            buttonBorderStyles,
+            'text-center text-lg',
+            'w-1/2 p-4 md:w-1/4',
+            'flex flex-row items-end justify-center gap-1.5',
+            'text-(--secondary-color)',
+            'flex-1 overflow-hidden',
+          )}
+          style={{
+            outline: pronunciationAutoPlay
+              ? '3px solid var(--secondary-color)'
+              : 'none',
+          }}
+          onClick={() => {
+            playClick();
+            setPronunciationAutoPlay(true);
+          }}
+        >
+          <span>
+            <span className='text-(--main-color)'>
+              {pronunciationAutoPlay && '\u2B24 '}
+            </span>
+            on
+          </span>
+          <Volume2 size={20} className='mb-0.5' />
+        </button>
+        <button
+          className={clsx(
+            buttonBorderStyles,
+            'text-center text-lg',
+            'w-1/2 p-4 md:w-1/4',
+            'flex flex-row items-end justify-center gap-1.5',
+            'text-(--secondary-color)',
+            'flex-1 overflow-hidden',
+          )}
+          style={{
+            outline: !pronunciationAutoPlay
+              ? '3px solid var(--secondary-color)'
+              : 'none',
+          }}
+          onClick={() => {
+            playClick();
+            setPronunciationAutoPlay(false);
+          }}
+        >
+          <span>
+            <span className='text-(--main-color)'>
+              {!pronunciationAutoPlay && '\u2B24 '}
             </span>
             off
           </span>
