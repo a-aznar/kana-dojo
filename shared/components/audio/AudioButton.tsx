@@ -91,7 +91,12 @@ const AudioButton: React.FC<AudioButtonProps> = ({
   }, [autoPlayTrigger, text]);
 
   useEffect(() => {
-    if (!autoPlay || !pronunciationAutoPlay || hasAutoPlayedRef.current) {
+    if (
+      !autoPlay ||
+      !pronunciationAutoPlay ||
+      !isSupported ||
+      hasAutoPlayedRef.current
+    ) {
       return;
     }
 
@@ -111,6 +116,7 @@ const AudioButton: React.FC<AudioButtonProps> = ({
     autoPlayTrigger,
     disabled,
     isPlaying,
+    isSupported,
     playPronunciation,
     pronunciationAutoPlay,
     pronunciationEnabled,
