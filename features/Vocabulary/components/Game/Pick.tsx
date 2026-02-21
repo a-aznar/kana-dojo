@@ -68,8 +68,7 @@ const OptionButton = memo(
           'text-(--border-color)',
           'border-b-4',
           isReverse ? 'text-4xl' : 'text-3xl',
-          isWrong &&
-            'border-(--border-color) hover:bg-(--card-color)',
+          isWrong && 'border-(--border-color) hover:bg-(--card-color)',
           !isWrong &&
             'border-(--secondary-color)/50 text-(--secondary-color) hover:border-(--secondary-color)',
         )}
@@ -89,9 +88,7 @@ const OptionButton = memo(
         <span
           className={clsx(
             'mr-4 hidden rounded-full bg-(--border-color) px-1 text-xs lg:inline',
-            isWrong
-              ? 'text-(--border-color)'
-              : 'text-(--secondary-color)',
+            isWrong ? 'text-(--border-color)' : 'text-(--secondary-color)',
           )}
         >
           {index + 1}
@@ -399,6 +396,8 @@ const VocabPickGame = ({ selectedWordObjs, isHidden }: VocabPickGameProps) => {
                   variant='icon-only'
                   size='sm'
                   className='bg-(--card-color) text-(--secondary-color)'
+                  autoPlay
+                  autoPlayTrigger={`${correctChar}-${quizType}-${String(isReverse)}`}
                 />
               )}
             </div>

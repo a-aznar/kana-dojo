@@ -336,6 +336,8 @@ const KanjiInputGame = ({
                   variant='icon-only'
                   size='sm'
                   className='bg-(--card-color) text-(--secondary-color)'
+                  autoPlay
+                  autoPlayTrigger={`${correctChar}-${String(isReverse)}`}
                 />
               )}
             </motion.div>

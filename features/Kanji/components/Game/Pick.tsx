@@ -409,6 +409,8 @@ const KanjiPickGame = ({ selectedKanjiObjs, isHidden }: KanjiPickGameProps) => {
                 variant='icon-only'
                 size='sm'
                 className='bg-(--card-color) text-(--secondary-color)'
+                autoPlay
+                autoPlayTrigger={correctChar}
               />
             )}
           </div>

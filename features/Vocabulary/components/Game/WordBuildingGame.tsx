@@ -37,7 +37,6 @@ const containsKanji = (text: string): boolean => {
   return /[\u4E00-\u9FAF]/.test(text);
 };
 
-
 interface VocabWordBuildingGameProps {
   selectedWordObjs: IVocabObj[];
   isHidden: boolean;
@@ -560,6 +559,8 @@ const VocabWordBuildingGame = ({
                       variant='icon-only'
                       size='sm'
                       className='bg-(--card-color) text-(--secondary-color)'
+                      autoPlay
+                      autoPlayTrigger={`${questionData.word}-${questionData.quizType}-${String(isReverse)}`}
                     />
                   )}
                 </motion.div>
@@ -590,7 +591,9 @@ const VocabWordBuildingGame = ({
                   : 'min-h-[5rem]',
               )}
               tilesContainerClassName={
-                isGlassMode ? 'rounded-xl bg-(--card-color) px-4 py-2' : undefined
+                isGlassMode
+                  ? 'rounded-xl bg-(--card-color) px-4 py-2'
+                  : undefined
               }
               tilesWrapperKey={questionData.word}
             />
