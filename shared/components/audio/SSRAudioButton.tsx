@@ -11,6 +11,8 @@ interface SSRAudioButtonProps {
   disabled?: boolean;
   onPlay?: () => void;
   onStop?: () => void;
+  autoPlay?: boolean;
+  autoPlayTrigger?: string | number;
 }
 
 const SSRAudioButton: React.FC<SSRAudioButtonProps> = props => {

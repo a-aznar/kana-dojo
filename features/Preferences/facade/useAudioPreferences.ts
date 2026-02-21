@@ -14,6 +14,8 @@ export interface AudioPreferences {
   setPronunciationPitch: (pitch: number) => void;
   pronunciationVoiceName: string | null;
   setPronunciationVoiceName: (name: string | null) => void;
+  pronunciationAutoPlay: boolean;
+  setPronunciationAutoPlay: (enabled: boolean) => void;
 }
 
 /**
@@ -48,6 +50,12 @@ export function useAudioPreferences(): AudioPreferences {
   const setPronunciationVoiceName = usePreferencesStore(
     state => state.setPronunciationVoiceName,
   );
+  const pronunciationAutoPlay = usePreferencesStore(
+    state => state.pronunciationAutoPlay,
+  );
+  const setPronunciationAutoPlay = usePreferencesStore(
+    state => state.setPronunciationAutoPlay,
+  );
 
   return useMemo<AudioPreferences>(
     () => ({
@@ -61,6 +69,8 @@ export function useAudioPreferences(): AudioPreferences {
       setPronunciationPitch,
       pronunciationVoiceName,
       setPronunciationVoiceName,
+      pronunciationAutoPlay,
+      setPronunciationAutoPlay,
     }),
     [
       silentMode,
@@ -73,6 +83,8 @@ export function useAudioPreferences(): AudioPreferences {
       setPronunciationPitch,
       pronunciationVoiceName,
       setPronunciationVoiceName,
+      pronunciationAutoPlay,
+      setPronunciationAutoPlay,
     ],
   );
 }

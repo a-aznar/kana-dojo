@@ -34,6 +34,9 @@ interface PreferencesState {
   pronunciationVoiceName: string | null;
   setPronunciationVoiceName: (name: string | null) => void;
 
+  pronunciationAutoPlay: boolean;
+  setPronunciationAutoPlay: (enabled: boolean) => void;
+
   furiganaEnabled: boolean;
   setFuriganaEnabled: (enabled: boolean) => void;
 
@@ -79,6 +82,9 @@ const usePreferencesStore = create<PreferencesState>()(
       setPronunciationPitch: pitch => set({ pronunciationPitch: pitch }),
       pronunciationVoiceName: null,
       setPronunciationVoiceName: name => set({ pronunciationVoiceName: name }),
+      pronunciationAutoPlay: false,
+      setPronunciationAutoPlay: enabled =>
+        set({ pronunciationAutoPlay: enabled }),
       furiganaEnabled: false,
       setFuriganaEnabled: enabled => set({ furiganaEnabled: enabled }),
 

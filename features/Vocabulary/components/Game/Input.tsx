@@ -80,6 +80,7 @@ const VocabInputGame = ({
       : correctWordObj?.reading;
 
   const [displayAnswerSummary, setDisplayAnswerSummary] = useState(false);
+  const [promptSequence, setPromptSequence] = useState(0);
 
   // Generate new character - defined before useCallback that uses it
   const generateNewCharacter = useCallback(() => {
@@ -103,6 +104,7 @@ const VocabInputGame = ({
     setInputValue('');
     setDisplayAnswerSummary(false);
     generateNewCharacter();
+    setPromptSequence(prev => prev + 1);
     setBottomBarState('check');
     speedStopwatch.reset();
     speedStopwatch.start();
@@ -296,6 +298,8 @@ const VocabInputGame = ({
                     variant='icon-only'
                     size='sm'
                     className='bg-(--card-color) text-(--secondary-color)'
+                    autoPlay
+                    autoPlayTrigger={promptSequence}
                   />
                 )}
               </motion.div>

@@ -1,6 +1,7 @@
 'use client';
 import { useJapaneseTTS } from '@/shared/hooks/useJapaneseTTS';
 import { Volume2, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { buttonBorderStyles } from '@/shared/lib/styles';
 import { useAudioPreferences } from '@/features/Preferences';
@@ -13,6 +14,8 @@ interface AudioButtonProps {
   disabled?: boolean;
   onPlay?: () => void;
   onStop?: () => void;
+  autoPlay?: boolean;
+  autoPlayTrigger?: string | number;
 }
 
 const AudioButton: React.FC<AudioButtonProps> = ({
@@ -23,39 +26,103 @@ const AudioButton: React.FC<AudioButtonProps> = ({
   disabled = false,
   onPlay,
   onStop,
+  autoPlay = false,
+  autoPlayTrigger,
 }) => {
   const { speak, stop, isPlaying, isSupported, refreshVoices } =
     useJapaneseTTS();
 
   // Get pronunciation settings from theme store
-  const { pronunciationEnabled, pronunciationSpeed, pronunciationPitch } =
-    useAudioPreferences();
+  const {
+    pronunciationEnabled,
+    pronunciationSpeed,
+    pronunciationPitch,
+    pronunciationAutoPlay,
+  } = useAudioPreferences();
 
-  const handleClick = async () => {
+  const playPronunciation = useCallback(async () => {
+    onPlay?.();
+
+    // Refresh voices before speaking
+    if (typeof window !== 'undefined') {
+      refreshVoices();
+      // Firefox needs longer delay to ensure voices are loaded
+      const isFirefox = /Firefox/i.test(navigator.userAgent);
+      const delay = isFirefox ? 300 : 100;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    await speak(text, {
+      rate: pronunciationSpeed,
+      pitch: pronunciationPitch,
+      volume: 0.8,
+    });
+  }, [
+    onPlay,
+    pronunciationPitch,
+    pronunciationSpeed,
+    refreshVoices,
+    speak,
+    text,
+  ]);
+
+  const handleClick = useCallback(async () => {
     if (disabled || !pronunciationEnabled) return;
 
     if (isPlaying) {
       stop();
       onStop?.();
     } else {
-      onPlay?.();
-
-      // Refresh voices before speaking
-      if (typeof window !== 'undefined') {
-        refreshVoices();
-        // Firefox needs longer delay to ensure voices are loaded
-        const isFirefox = /Firefox/i.test(navigator.userAgent);
-        const delay = isFirefox ? 300 : 100;
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-
-      await speak(text, {
-        rate: pronunciationSpeed,
-        pitch: pronunciationPitch,
-        volume: 0.8,
-      });
+      await playPronunciation();
     }
-  };
+  }, [
+    disabled,
+    isPlaying,
+    onStop,
+    playPronunciation,
+    pronunciationEnabled,
+    stop,
+  ]);
+
+  const hasAutoPlayedRef = useRef(false);
+
+  useEffect(() => {
+    hasAutoPlayedRef.current = false;
+  }, [autoPlayTrigger, text]);
+
+  useEffect(() => {
+    if (
+      !autoPlay ||
+      !pronunciationAutoPlay ||
+      !isSupported ||
+      hasAutoPlayedRef.current
+    ) {
+      return;
+    }
+
+    hasAutoPlayedRef.current = true;
+
+    const runAutoPlay = async () => {
+      if (disabled || !pronunciationEnabled) return;
+      if (isPlaying) {
+        stop();
+      }
+      await playPronunciation();
+    };
+
+    void runAutoPlay();
+  }, [
+    autoPlay,
+    autoPlayTrigger,
+    disabled,
+    isPlaying,
+    isSupported,
+    playPronunciation,
+    pronunciationAutoPlay,
+    pronunciationEnabled,
+    stop,
+    text,
+  ]);
 
   const sizeClasses = {
     sm: 'p-2 text-sm',
