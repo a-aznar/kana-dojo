@@ -526,7 +526,7 @@
     "region": "Nagoya",
     "note": "Strong Nagoya marker. (Set 3)",
     "id": 53,
-    "issued": false,
+    "issued": true,
     "completed": false
   },
   {
