@@ -31,6 +31,7 @@ interface IFormState {
   createCustomDeck: (name: string, vocabObjs: IVocabObj[]) => void;
   updateCustomDeckName: (deckId: string, name: string) => void;
   addVocabToCustomDeck: (deckId: string, vocabObj: IVocabObj) => void;
+  setCustomDeckVocab: (deckId: string, vocabObjs: IVocabObj[]) => void;
   removeVocabFromCustomDeck: (deckId: string, word: string) => void;
   deleteCustomDeck: (deckId: string) => void;
 }
@@ -138,6 +139,17 @@ const useVocabStore = create<IFormState>()(
               ? {
                   ...deck,
                   vocabObjs: uniqByWord([...deck.vocabObjs, vocabObj]),
+                }
+              : deck,
+          ),
+        })),
+      setCustomDeckVocab: (deckId, vocabObjs) =>
+        set(state => ({
+          customDecks: state.customDecks.map(deck =>
+            deck.id === deckId
+              ? {
+                  ...deck,
+                  vocabObjs: uniqByWord(vocabObjs),
                 }
               : deck,
           ),

@@ -11,11 +11,12 @@ import {
 import useVocabStore, {
   type IVocabObj,
 } from '@/features/Vocabulary/store/useVocabStore';
-import { Circle, CircleCheck } from 'lucide-react';
+import { Circle, CircleCheck, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { toKana, toRomaji } from 'wanakana';
 
 const ALL_LEVELS: VocabLevel[] = ['n5', 'n4', 'n3', 'n2', 'n1'];
-const SEARCH_RESULTS_LIMIT = 25;
+const SEARCH_RESULTS_LIMIT = 80;
+const DECK_NAME_CHAR_LIMIT = 40;
 
 const normalize = (text: string) => text.toLowerCase().trim();
 
@@ -61,12 +62,7 @@ const CustomDeckManager = () => {
   const updateCustomDeckName = useVocabStore(
     state => state.updateCustomDeckName,
   );
-  const addVocabToCustomDeck = useVocabStore(
-    state => state.addVocabToCustomDeck,
-  );
-  const removeVocabFromCustomDeck = useVocabStore(
-    state => state.removeVocabFromCustomDeck,
-  );
+  const setCustomDeckVocab = useVocabStore(state => state.setCustomDeckVocab);
   const deleteCustomDeck = useVocabStore(state => state.deleteCustomDeck);
   const setSelectedVocabObjs = useVocabStore(
     state => state.setSelectedVocabObjs,
@@ -76,11 +72,13 @@ const CustomDeckManager = () => {
   );
 
   const [allVocabObjs, setAllVocabObjs] = useState<IVocabObj[]>([]);
-  const [deckNameInput, setDeckNameInput] = useState('');
-  const [createSearch, setCreateSearch] = useState('');
-  const [createSelection, setCreateSelection] = useState<IVocabObj[]>([]);
-  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
+
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
+  const [deckNameInput, setDeckNameInput] = useState('');
+  const [deckSearch, setDeckSearch] = useState('');
+  const [draftSelection, setDraftSelection] = useState<IVocabObj[]>([]);
 
   useEffect(() => {
     const loadAllVocab = async () => {
@@ -88,9 +86,7 @@ const CustomDeckManager = () => {
         ALL_LEVELS.map(level => vocabDataService.getVocabByLevel(level)),
       );
 
-      const allWords = allLevels.flat();
-      const dedupedWords = dedupeWords(allWords);
-      setAllVocabObjs(dedupedWords);
+      setAllVocabObjs(dedupeWords(allLevels.flat()));
     };
 
     void loadAllVocab();
@@ -108,11 +104,9 @@ const CustomDeckManager = () => {
       selectedDeckIds.includes(deck.id),
     );
 
-    const selectedVocabObjs = dedupeWords(
-      selectedDecks.flatMap(deck => deck.vocabObjs),
+    setSelectedVocabObjs(
+      dedupeWords(selectedDecks.flatMap(deck => deck.vocabObjs)),
     );
-
-    setSelectedVocabObjs(selectedVocabObjs);
     setSelectedVocabSets(selectedDecks.map(deck => `Deck: ${deck.name}`));
   }, [
     customDecks,
@@ -121,130 +115,82 @@ const CustomDeckManager = () => {
     setSelectedVocabSets,
   ]);
 
-  const createSelectionWords = useMemo(
-    () => new Set(createSelection.map(vocabObj => vocabObj.word)),
-    [createSelection],
+  const selectedDraftWords = useMemo(
+    () => new Set(draftSelection.map(vocabObj => vocabObj.word)),
+    [draftSelection],
   );
 
-  const createSearchResults = useMemo(
+  const filteredResults = useMemo(
     () =>
       allVocabObjs
-        .filter(vocabObj => includesQuery(vocabObj, createSearch))
+        .filter(vocabObj => includesQuery(vocabObj, deckSearch))
         .slice(0, SEARCH_RESULTS_LIMIT),
-    [allVocabObjs, createSearch],
+    [allVocabObjs, deckSearch],
   );
 
-  const editingDeck = useMemo(
-    () => customDecks.find(deck => deck.id === editingDeckId) ?? null,
-    [customDecks, editingDeckId],
-  );
+  const openCreateEditor = () => {
+    playClick();
+    setEditingDeckId(null);
+    setDeckNameInput('');
+    setDeckSearch('');
+    setDraftSelection([]);
+    setIsEditorOpen(true);
+  };
 
-  const [editSearch, setEditSearch] = useState('');
+  const openEditEditor = (deckId: string) => {
+    const deck = customDecks.find(currentDeck => currentDeck.id === deckId);
+    if (!deck) return;
 
-  const editSearchResults = useMemo(() => {
-    if (!editingDeck) return [];
-    const selectedWords = new Set(
-      editingDeck.vocabObjs.map(vocabObj => vocabObj.word),
+    playClick();
+    setEditingDeckId(deck.id);
+    setDeckNameInput(deck.name);
+    setDeckSearch('');
+    setDraftSelection(deck.vocabObjs);
+    setIsEditorOpen(true);
+  };
+
+  const toggleDraftVocab = (vocabObj: IVocabObj) => {
+    setDraftSelection(prev =>
+      selectedDraftWords.has(vocabObj.word)
+        ? prev.filter(currentVocab => currentVocab.word !== vocabObj.word)
+        : dedupeWords([...prev, vocabObj]),
     );
+  };
 
-    return allVocabObjs
-      .filter(vocabObj => !selectedWords.has(vocabObj.word))
-      .filter(vocabObj => includesQuery(vocabObj, editSearch))
-      .slice(0, SEARCH_RESULTS_LIMIT);
-  }, [allVocabObjs, editSearch, editingDeck]);
+  const saveDeck = () => {
+    const trimmedName = deckNameInput.trim();
+    if (!trimmedName || draftSelection.length === 0) return;
 
-  const toggleDeckSelection = (deckId: string) => {
-    setSelectedDeckIds(prev =>
-      prev.includes(deckId)
-        ? prev.filter(currentDeckId => currentDeckId !== deckId)
-        : [...prev, deckId],
-    );
+    playClick();
+    if (!editingDeckId) {
+      createCustomDeck(trimmedName, draftSelection);
+    } else {
+      updateCustomDeckName(editingDeckId, trimmedName);
+      setCustomDeckVocab(editingDeckId, draftSelection);
+    }
+
+    setIsEditorOpen(false);
   };
 
   return (
     <div className='flex flex-col gap-4'>
-      <div className='mx-4 flex flex-col gap-3 rounded-3xl border-2 border-(--border-color) bg-(--card-color) p-4'>
-        <h2 className='text-2xl'>Custom Vocabulary Decks</h2>
-        <input
-          type='text'
-          value={deckNameInput}
-          onChange={event => setDeckNameInput(event.target.value)}
-          placeholder='Deck name (e.g. Travel words)'
-          className='rounded-2xl border-2 border-(--border-color) bg-(--background-color) px-3 py-2 text-(--main-color) outline-none'
-        />
-        <input
-          type='text'
-          value={createSearch}
-          onChange={event => setCreateSearch(event.target.value)}
-          placeholder='Search vocab to add...'
-          className='rounded-2xl border-2 border-(--border-color) bg-(--background-color) px-3 py-2 text-(--main-color) outline-none'
-        />
-
-        <div className='max-h-52 overflow-y-auto rounded-2xl border-2 border-(--border-color) bg-(--background-color) p-2'>
-          {createSearchResults.length === 0 ? (
-            <p className='px-2 py-1 text-sm text-(--secondary-color)'>
-              No matches found.
-            </p>
-          ) : (
-            createSearchResults.map(vocabObj => {
-              const isAdded = createSelectionWords.has(vocabObj.word);
-              return (
-                <button
-                  key={vocabObj.word}
-                  onClick={() => {
-                    playClick();
-                    setCreateSelection(prev =>
-                      isAdded
-                        ? prev.filter(
-                            currentVocabObj =>
-                              currentVocabObj.word !== vocabObj.word,
-                          )
-                        : [...prev, vocabObj],
-                    );
-                  }}
-                  className={clsx(
-                    'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left',
-                    isAdded
-                      ? 'bg-(--secondary-color)/30'
-                      : 'hover:bg-(--card-color)',
-                  )}
-                >
-                  <span>
-                    {vocabObj.word}{' '}
-                    <span className='text-sm text-(--secondary-color)'>
-                      ({vocabObj.reading})
-                    </span>
-                  </span>
-                  <span className='text-xs text-(--secondary-color)'>
-                    {isAdded ? 'Added' : 'Add'}
-                  </span>
-                </button>
-              );
-            })
-          )}
+      <div className='mx-4 flex items-center justify-between rounded-3xl border-2 border-(--border-color) bg-(--card-color) p-4'>
+        <div>
+          <h2 className='text-2xl'>Custom Vocabulary Decks</h2>
+          <p className='text-sm text-(--secondary-color)'>
+            Create and edit decks in a popup, then select decks to practice.
+          </p>
         </div>
-
-        <p className='text-sm text-(--secondary-color)'>
-          Selected for new deck: {createSelection.length}
-        </p>
-
         <ActionButton
-          onClick={() => {
-            const trimmedDeckName = deckNameInput.trim();
-            if (!trimmedDeckName || createSelection.length === 0) return;
-            playClick();
-            createCustomDeck(trimmedDeckName, createSelection);
-            setDeckNameInput('');
-            setCreateSearch('');
-            setCreateSelection([]);
-          }}
+          onClick={openCreateEditor}
           borderRadius='3xl'
           borderBottomThickness={10}
           colorScheme='main'
           borderColorScheme='main'
-          className='px-4 py-2'
+          className='px-4 py-3'
         >
-          Create Deck
+          <Plus size={16} />
+          New Deck
         </ActionButton>
       </div>
 
@@ -260,7 +206,11 @@ const CustomDeckManager = () => {
               <button
                 onClick={() => {
                   playClick();
-                  toggleDeckSelection(deck.id);
+                  setSelectedDeckIds(prev =>
+                    prev.includes(deck.id)
+                      ? prev.filter(currentDeckId => currentDeckId !== deck.id)
+                      : [...prev, deck.id],
+                  );
                 }}
                 className={clsx(
                   'group flex items-center justify-center gap-2 rounded-3xl border-b-10 px-2 py-3 text-2xl transition-all duration-250 ease-in-out',
@@ -277,37 +227,26 @@ const CustomDeckManager = () => {
                 {deck.name}
               </button>
 
-              <div className='flex flex-col gap-2 md:flex-row md:items-center'>
-                <input
-                  type='text'
-                  value={deck.name}
-                  onChange={event =>
-                    updateCustomDeckName(deck.id, event.target.value)
-                  }
-                  className='w-full rounded-2xl border-2 border-(--border-color) bg-(--background-color) px-3 py-2 text-xl outline-none'
-                />
-                <div className='flex items-center gap-2'>
+              <div className='flex items-center justify-between'>
+                <p className='text-sm text-(--secondary-color)'>
+                  {deck.vocabObjs.length} vocab in deck
+                </p>
+                <div className='flex gap-2'>
                   <ActionButton
-                    onClick={() => {
-                      playClick();
-                      setEditingDeckId(currentDeckId =>
-                        currentDeckId === deck.id ? null : deck.id,
-                      );
-                      setEditSearch('');
-                    }}
+                    onClick={() => openEditEditor(deck.id)}
                     borderRadius='3xl'
                     borderBottomThickness={8}
                     colorScheme='secondary'
                     borderColorScheme='secondary'
                     className='px-3 py-2'
                   >
-                    {editingDeckId === deck.id ? 'Close Edit' : 'Edit'}
+                    <Pencil size={14} />
+                    Edit
                   </ActionButton>
                   <ActionButton
                     onClick={() => {
                       playClick();
                       deleteCustomDeck(deck.id);
-                      if (editingDeckId === deck.id) setEditingDeckId(null);
                     }}
                     borderRadius='3xl'
                     borderBottomThickness={8}
@@ -315,69 +254,11 @@ const CustomDeckManager = () => {
                     borderColorScheme='secondary'
                     className='px-3 py-2'
                   >
+                    <Trash2 size={14} />
                     Delete
                   </ActionButton>
                 </div>
               </div>
-
-              <p className='text-sm text-(--secondary-color)'>
-                {deck.vocabObjs.length} vocab in deck
-              </p>
-
-              {editingDeckId === deck.id && (
-                <div className='flex flex-col gap-2 rounded-2xl border-2 border-(--border-color) bg-(--background-color) p-3'>
-                  <input
-                    type='text'
-                    value={editSearch}
-                    onChange={event => setEditSearch(event.target.value)}
-                    placeholder='Search vocab to add to this deck...'
-                    className='rounded-xl border-2 border-(--border-color) bg-(--background-color) px-3 py-2 outline-none'
-                  />
-
-                  <div className='max-h-44 overflow-y-auto'>
-                    {editSearchResults.map(vocabObj => (
-                      <button
-                        key={`${deck.id}-${vocabObj.word}`}
-                        onClick={() => {
-                          playClick();
-                          addVocabToCustomDeck(deck.id, vocabObj);
-                        }}
-                        className='flex w-full items-center justify-between rounded-xl px-3 py-2 text-left hover:bg-(--card-color)'
-                      >
-                        <span>{vocabObj.word}</span>
-                        <span className='text-xs text-(--secondary-color)'>
-                          Add
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className='max-h-52 overflow-y-auto rounded-xl border-2 border-(--border-color) p-2'>
-                    {deck.vocabObjs.map(vocabObj => (
-                      <div
-                        key={`${deck.id}-selected-${vocabObj.word}`}
-                        className='flex items-center justify-between rounded-lg px-2 py-1 hover:bg-(--card-color)'
-                      >
-                        <span>
-                          {vocabObj.word}{' '}
-                          <span className='text-sm text-(--secondary-color)'>
-                            {vocabObj.meanings[0]}
-                          </span>
-                        </span>
-                        <button
-                          onClick={() => {
-                            playClick();
-                            removeVocabFromCustomDeck(deck.id, vocabObj.word);
-                          }}
-                          className='text-sm text-(--secondary-color) hover:text-(--main-color)'
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
@@ -388,6 +269,122 @@ const CustomDeckManager = () => {
           </p>
         )}
       </div>
+
+      {isEditorOpen && (
+        <div className='fixed inset-0 z-70 flex items-center justify-center bg-black/50 p-4'>
+          <div className='flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-(--border-color) bg-(--background-color)'>
+            <div className='flex items-center justify-between border-b border-(--border-color) p-4'>
+              <div>
+                <h3 className='text-2xl'>
+                  {editingDeckId ? 'Edit Custom Deck' : 'Create Custom Deck'}
+                </h3>
+                <p className='text-sm text-(--secondary-color)'>
+                  Name is required, up to {DECK_NAME_CHAR_LIMIT} characters, and
+                  at least 1 vocabulary item.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  playClick();
+                  setIsEditorOpen(false);
+                }}
+                className='rounded-xl p-2 hover:bg-(--card-color)'
+              >
+                <X />
+              </button>
+            </div>
+
+            <div className='flex shrink-0 flex-col gap-3 border-b border-(--border-color) p-4'>
+              <input
+                type='text'
+                maxLength={DECK_NAME_CHAR_LIMIT}
+                value={deckNameInput}
+                onChange={event => setDeckNameInput(event.target.value)}
+                placeholder='Deck name'
+                className='rounded-2xl border-2 border-(--border-color) bg-(--background-color) px-3 py-2 text-(--main-color) outline-none'
+              />
+              <input
+                type='text'
+                value={deckSearch}
+                onChange={event => setDeckSearch(event.target.value)}
+                placeholder='Search by kanji, kana, hiragana, romaji, or meaning...'
+                className='rounded-2xl border-2 border-(--border-color) bg-(--background-color) px-3 py-2 text-(--main-color) outline-none'
+              />
+            </div>
+
+            <div className='grid flex-1 gap-4 overflow-y-auto p-4 lg:grid-cols-2'>
+              <div className='flex flex-col gap-2'>
+                <h4 className='text-lg'>Selected ({draftSelection.length})</h4>
+                <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+                  {draftSelection.map(vocabObj => (
+                    <button
+                      key={`selected-${vocabObj.word}`}
+                      onClick={() => {
+                        playClick();
+                        toggleDraftVocab(vocabObj);
+                      }}
+                      className='rounded-2xl border-2 border-(--secondary-color) bg-(--card-color) p-3 text-left'
+                    >
+                      <p className='text-2xl'>{vocabObj.word}</p>
+                      <p className='text-sm text-(--secondary-color)'>
+                        {toRomaji(toKana(vocabObj.reading))}
+                      </p>
+                      <p className='text-sm text-(--secondary-color)'>
+                        {vocabObj.meanings[0]}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <h4 className='text-lg'>Search Results</h4>
+                <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
+                  {filteredResults.map(vocabObj => {
+                    const isSelected = selectedDraftWords.has(vocabObj.word);
+                    return (
+                      <button
+                        key={`result-${vocabObj.word}`}
+                        onClick={() => {
+                          playClick();
+                          toggleDraftVocab(vocabObj);
+                        }}
+                        className={clsx(
+                          'rounded-2xl border-2 p-3 text-left',
+                          isSelected
+                            ? 'border-(--secondary-color) bg-(--card-color)'
+                            : 'border-(--border-color) bg-(--background-color)',
+                        )}
+                      >
+                        <p className='text-2xl'>{vocabObj.word}</p>
+                        <p className='text-sm text-(--secondary-color)'>
+                          {toRomaji(toKana(vocabObj.reading))}
+                        </p>
+                        <p className='text-sm text-(--secondary-color)'>
+                          {vocabObj.meanings[0]}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className='flex justify-end border-t border-(--border-color) p-4'>
+              <ActionButton
+                onClick={saveDeck}
+                borderRadius='3xl'
+                borderBottomThickness={10}
+                colorScheme='main'
+                borderColorScheme='main'
+                className='px-5 py-3'
+              >
+                Save Deck
+              </ActionButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
