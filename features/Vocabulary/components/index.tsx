@@ -82,38 +82,39 @@ const VocabCards = () => {
     [],
   );
 
+  if (selectedVocabCollectionName === 'custom') {
+    return <CustomDeckManager />;
+  }
+
   return (
-    <>
-      <LevelSetCards<VocabLevel, IWord>
-        levelOrder={levelOrder}
-        selectedUnitName={selectedVocabCollectionName as VocabLevel}
-        itemsPerSet={WORDS_PER_SET}
-        getCollectionName={getCollectionName}
-        getCollectionSize={getCollectionSize}
-        loadItemsByLevel={loadItemsByLevel}
-        selectedSets={selectedVocabSets}
-        setSelectedSets={setSelectedVocabSets}
-        clearSelected={() => {
-          clearVocabObjs();
-          clearVocabSets();
-        }}
-        toggleItems={items => addWordObjs(items)}
-        collapsedRows={collapsedRows}
-        setCollapsedRows={setCollapsedRows}
-        masteryByKey={allTimeStats.characterMastery}
-        getMasteryKey={item => item.word}
-        renderSetDictionary={items => <VocabSetDictionary words={items} />}
-        loadingText='Loading vocabulary sets...'
-        tipText={
-          <>
-            💡 <strong>Tip:</strong> Complete some practice sessions to unlock
-            the &apos;Hide Mastered Sets&apos; filter. Sets become mastered when
-            you achieve 90%+ accuracy with 10+ attempts per word.
-          </>
-        }
-      />
-      <CustomDeckManager />
-    </>
+    <LevelSetCards<VocabLevel, IWord>
+      levelOrder={levelOrder}
+      selectedUnitName={selectedVocabCollectionName as VocabLevel}
+      itemsPerSet={WORDS_PER_SET}
+      getCollectionName={getCollectionName}
+      getCollectionSize={getCollectionSize}
+      loadItemsByLevel={loadItemsByLevel}
+      selectedSets={selectedVocabSets}
+      setSelectedSets={setSelectedVocabSets}
+      clearSelected={() => {
+        clearVocabObjs();
+        clearVocabSets();
+      }}
+      toggleItems={items => addWordObjs(items)}
+      collapsedRows={collapsedRows}
+      setCollapsedRows={setCollapsedRows}
+      masteryByKey={allTimeStats.characterMastery}
+      getMasteryKey={item => item.word}
+      renderSetDictionary={items => <VocabSetDictionary words={items} />}
+      loadingText='Loading vocabulary sets...'
+      tipText={
+        <>
+          💡 <strong>Tip:</strong> Complete some practice sessions to unlock the
+          &apos;Hide Mastered Sets&apos; filter. Sets become mastered when you
+          achieve 90%+ accuracy with 10+ attempts per word.
+        </>
+      }
+    />
   );
 };
 
