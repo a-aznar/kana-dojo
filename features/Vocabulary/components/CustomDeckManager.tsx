@@ -12,6 +12,16 @@ import useVocabStore, {
   type IVocabObj,
 } from '@/features/Vocabulary/store/useVocabStore';
 import { Circle, CircleCheck, Pencil, Plus, Trash2, X } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog';
 import { toKana, toRomaji } from 'wanakana';
 
 const ALL_LEVELS: VocabLevel[] = ['n5', 'n4', 'n3', 'n2', 'n1'];
@@ -79,6 +89,9 @@ const CustomDeckManager = () => {
   const [deckNameInput, setDeckNameInput] = useState('');
   const [deckSearch, setDeckSearch] = useState('');
   const [draftSelection, setDraftSelection] = useState<IVocabObj[]>([]);
+  const [deckPendingDelete, setDeckPendingDelete] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const loadAllVocab = async () => {
@@ -236,8 +249,8 @@ const CustomDeckManager = () => {
                     onClick={() => openEditEditor(deck.id)}
                     borderRadius='3xl'
                     borderBottomThickness={8}
-                    colorScheme='secondary'
-                    borderColorScheme='secondary'
+                    colorScheme='main'
+                    borderColorScheme='main'
                     className='px-3 py-2'
                   >
                     <Pencil size={14} />
@@ -246,7 +259,7 @@ const CustomDeckManager = () => {
                   <ActionButton
                     onClick={() => {
                       playClick();
-                      deleteCustomDeck(deck.id);
+                      setDeckPendingDelete(deck.id);
                     }}
                     borderRadius='3xl'
                     borderBottomThickness={8}
@@ -269,6 +282,47 @@ const CustomDeckManager = () => {
           </p>
         )}
       </div>
+
+      <AlertDialog
+        open={deckPendingDelete !== null}
+        onOpenChange={open => {
+          if (!open) setDeckPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent className='rounded-3xl border-(--border-color) bg-(--card-color)'>
+          <AlertDialogHeader>
+            <AlertDialogTitle className='text-2xl font-bold text-(--main-color)'>
+              Delete Deck?
+            </AlertDialogTitle>
+            <AlertDialogDescription className='text-base text-(--secondary-color)'>
+              This will permanently delete this custom deck. This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className='gap-3'>
+            <AlertDialogCancel
+              onClick={() => {
+                playClick();
+                setDeckPendingDelete(null);
+              }}
+              className='cursor-pointer rounded-full border-(--border-color) px-6 text-(--main-color) transition-colors duration-300 hover:bg-(--background-color)'
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!deckPendingDelete) return;
+                playClick();
+                deleteCustomDeck(deckPendingDelete);
+                setDeckPendingDelete(null);
+              }}
+              className='cursor-pointer rounded-full bg-(--secondary-color) px-6 transition-colors duration-300 hover:bg-(--secondary-color)/80'
+            >
+              Delete Deck
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isEditorOpen && (
         <div className='fixed inset-0 z-70 flex items-center justify-center bg-black/50 p-4'>
