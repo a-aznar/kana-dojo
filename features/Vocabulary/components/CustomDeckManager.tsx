@@ -12,6 +12,7 @@ import useVocabStore, {
   type IVocabObj,
 } from '@/features/Vocabulary/store/useVocabStore';
 import { Circle, CircleCheck } from 'lucide-react';
+import { toKana, toRomaji } from 'wanakana';
 
 const ALL_LEVELS: VocabLevel[] = ['n5', 'n4', 'n3', 'n2', 'n1'];
 const SEARCH_RESULTS_LIMIT = 25;
@@ -20,13 +21,26 @@ const normalize = (text: string) => text.toLowerCase().trim();
 
 const includesQuery = (vocabObj: IVocabObj, query: string) => {
   if (!query) return true;
+
   const normalizedQuery = normalize(query);
-  return (
-    normalize(vocabObj.word).includes(normalizedQuery) ||
-    normalize(vocabObj.reading).includes(normalizedQuery) ||
-    vocabObj.meanings.some(meaning =>
-      normalize(meaning).includes(normalizedQuery),
-    )
+  const queryKana = normalize(toKana(query));
+  const queryRomaji = normalize(toRomaji(query));
+
+  const searchTerms = [
+    normalize(vocabObj.word),
+    normalize(vocabObj.reading),
+    normalize(toKana(vocabObj.word)),
+    normalize(toKana(vocabObj.reading)),
+    normalize(toRomaji(vocabObj.word)),
+    normalize(toRomaji(vocabObj.reading)),
+    ...vocabObj.meanings.map(meaning => normalize(meaning)),
+  ];
+
+  return searchTerms.some(
+    term =>
+      term.includes(normalizedQuery) ||
+      term.includes(queryKana) ||
+      term.includes(queryRomaji),
   );
 };
 
