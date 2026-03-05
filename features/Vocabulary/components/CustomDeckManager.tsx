@@ -30,28 +30,28 @@ const DECK_NAME_CHAR_LIMIT = 40;
 
 const normalize = (text: string) => text.toLowerCase().trim();
 
-const includesQuery = (vocabObj: IVocabObj, query: string) => {
-  if (!query) return true;
+interface QueryVariants {
+  normalizedQuery: string;
+  queryKana: string;
+  queryRomaji: string;
+}
 
-  const normalizedQuery = normalize(query);
-  const queryKana = normalize(toKana(query));
-  const queryRomaji = normalize(toRomaji(query));
+interface SearchableVocabObj {
+  vocabObj: IVocabObj;
+  searchTerms: string[];
+}
 
-  const searchTerms = [
-    normalize(vocabObj.word),
-    normalize(vocabObj.reading),
-    normalize(toKana(vocabObj.word)),
-    normalize(toKana(vocabObj.reading)),
-    normalize(toRomaji(vocabObj.word)),
-    normalize(toRomaji(vocabObj.reading)),
-    ...vocabObj.meanings.map(meaning => normalize(meaning)),
-  ];
+const includesQuery = (
+  searchableVocabObj: SearchableVocabObj,
+  queryVariants: QueryVariants,
+) => {
+  if (!queryVariants.normalizedQuery) return true;
 
-  return searchTerms.some(
+  return searchableVocabObj.searchTerms.some(
     term =>
-      term.includes(normalizedQuery) ||
-      term.includes(queryKana) ||
-      term.includes(queryRomaji),
+      term.includes(queryVariants.normalizedQuery) ||
+      term.includes(queryVariants.queryKana) ||
+      term.includes(queryVariants.queryRomaji),
   );
 };
 
@@ -81,7 +81,7 @@ const CustomDeckManager = () => {
     state => state.setSelectedVocabSets,
   );
 
-  const [allVocabObjs, setAllVocabObjs] = useState<IVocabObj[]>([]);
+  const [allVocabObjs, setAllVocabObjs] = useState<SearchableVocabObj[]>([]);
   const [selectedDeckIds, setSelectedDeckIds] = useState<string[]>([]);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -99,7 +99,22 @@ const CustomDeckManager = () => {
         ALL_LEVELS.map(level => vocabDataService.getVocabByLevel(level)),
       );
 
-      setAllVocabObjs(dedupeWords(allLevels.flat()));
+      const searchableVocabObjs = dedupeWords(allLevels.flat()).map(
+        vocabObj => ({
+          vocabObj,
+          searchTerms: [
+            normalize(vocabObj.word),
+            normalize(vocabObj.reading),
+            normalize(toKana(vocabObj.word)),
+            normalize(toKana(vocabObj.reading)),
+            normalize(toRomaji(vocabObj.word)),
+            normalize(toRomaji(vocabObj.reading)),
+            ...vocabObj.meanings.map(meaning => normalize(meaning)),
+          ],
+        }),
+      );
+
+      setAllVocabObjs(searchableVocabObjs);
     };
 
     void loadAllVocab();
@@ -134,10 +149,18 @@ const CustomDeckManager = () => {
   );
 
   const filteredResults = useMemo(
-    () =>
-      allVocabObjs
-        .filter(vocabObj => includesQuery(vocabObj, deckSearch))
-        .slice(0, SEARCH_RESULTS_LIMIT),
+    () => {
+      const queryVariants = {
+        normalizedQuery: normalize(deckSearch),
+        queryKana: normalize(toKana(deckSearch)),
+        queryRomaji: normalize(toRomaji(deckSearch)),
+      };
+
+      return allVocabObjs
+        .filter(vocabObj => includesQuery(vocabObj, queryVariants))
+        .map(({ vocabObj }) => vocabObj)
+        .slice(0, SEARCH_RESULTS_LIMIT);
+    },
     [allVocabObjs, deckSearch],
   );
 
@@ -164,7 +187,7 @@ const CustomDeckManager = () => {
 
   const toggleDraftVocab = (vocabObj: IVocabObj) => {
     setDraftSelection(prev =>
-      selectedDraftWords.has(vocabObj.word)
+      prev.some(currentVocab => currentVocab.word === vocabObj.word)
         ? prev.filter(currentVocab => currentVocab.word !== vocabObj.word)
         : dedupeWords([...prev, vocabObj]),
     );

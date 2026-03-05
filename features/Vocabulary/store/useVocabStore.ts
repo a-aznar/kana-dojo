@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 export interface IVocabObj {
   word: string;
@@ -42,6 +42,8 @@ export interface IVocabDeck {
   vocabObjs: IVocabObj[];
 }
 
+const DECK_NAME_CHAR_LIMIT = 40;
+
 const uniqByWord = (vocabObjs: IVocabObj[]) => {
   const seenWords = new Set<string>();
   return vocabObjs.filter(vocabObj => {
@@ -50,6 +52,9 @@ const uniqByWord = (vocabObjs: IVocabObj[]) => {
     return true;
   });
 };
+
+const sanitizeDeckName = (name: string) =>
+  name.trim().slice(0, DECK_NAME_CHAR_LIMIT);
 
 const useVocabStore = create<IFormState>()(
   persist(
@@ -113,25 +118,35 @@ const useVocabStore = create<IFormState>()(
 
       customDecks: [],
       createCustomDeck: (name, vocabObjs) =>
-        set(state => ({
-          customDecks: [
-            ...state.customDecks,
-            {
-              id:
-                typeof crypto !== 'undefined' && 'randomUUID' in crypto
-                  ? crypto.randomUUID()
-                  : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-              name: name.trim(),
-              vocabObjs: uniqByWord(vocabObjs),
-            },
-          ],
-        })),
+        set(state => {
+          const sanitizedName = sanitizeDeckName(name);
+          if (!sanitizedName) return state;
+
+          return {
+            customDecks: [
+              ...state.customDecks,
+              {
+                id:
+                  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                name: sanitizedName,
+                vocabObjs: uniqByWord(vocabObjs),
+              },
+            ],
+          };
+        }),
       updateCustomDeckName: (deckId, name) =>
-        set(state => ({
-          customDecks: state.customDecks.map(deck =>
-            deck.id === deckId ? { ...deck, name: name.trim() } : deck,
-          ),
-        })),
+        set(state => {
+          const sanitizedName = sanitizeDeckName(name);
+          if (!sanitizedName) return state;
+
+          return {
+            customDecks: state.customDecks.map(deck =>
+              deck.id === deckId ? { ...deck, name: sanitizedName } : deck,
+            ),
+          };
+        }),
       addVocabToCustomDeck: (deckId, vocabObj) =>
         set(state => ({
           customDecks: state.customDecks.map(deck =>
@@ -174,6 +189,10 @@ const useVocabStore = create<IFormState>()(
     }),
     {
       name: 'vocabulary-storage',
+      storage:
+        typeof window !== 'undefined'
+          ? createJSONStorage(() => localStorage)
+          : undefined,
       partialize: state => ({
         customDecks: state.customDecks,
       }),
