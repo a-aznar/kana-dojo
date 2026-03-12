@@ -510,7 +510,7 @@
     "meaning": "Let bygones be bygones. (Set 3)",
     "id": 57,
     "issued": false,
-    "completed": false
+    "completed": true
   },
   {
     "japanese": "念には念を入れる",
@@ -528,7 +528,7 @@
     "meaning": "Leave cleanly without trouble. (Set 3)",
     "id": 59,
     "issued": false,
-    "completed": false
+    "completed": true
   },
   {
     "japanese": "手に入れる",
@@ -537,7 +537,7 @@
     "meaning": "Obtain something. (Set 3)",
     "id": 60,
     "issued": false,
-    "completed": false
+    "completed": true
   },
   {
     "japanese": "猫の手も借りたい",
@@ -545,7 +545,7 @@
     "english": "I’d even borrow a cat’s paws",
     "meaning": "Extremely busy and desperate for help. (Set 4)",
     "id": 61,
-    "issued": false,
+    "issued": true,
     "completed": false
   },
   {
