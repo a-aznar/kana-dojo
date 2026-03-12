@@ -779,7 +779,7 @@
     "dont": "参道の中央を歩く",
     "note": "中央は神様の通り道とされる。",
     "id": 87,
-    "issued": false,
+    "issued": true,
     "completed": false
   },
   {
@@ -1079,7 +1079,7 @@
     "issued": false,
     "completed": false
   },
-    {
+  {
     "situation": "電車内 7",
     "do": "車内では静かに過ごす",
     "dont": "大声で会話する",
